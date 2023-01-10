@@ -1,0 +1,472 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "urgent care demo",
+      "intents": [
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "ScheduleAppointmentIntent",
+          "slots": [
+            {
+              "name": "appointmentReason",
+              "type": "APPOINTMENT_REASON",
+              "samples": [
+                "{appointmentReason}"
+              ]
+            },
+            {
+              "name": "appointmentSymptoms",
+              "type": "APPOINTMENT_SYMPTOMS",
+              "samples": [
+                "{appointmentSymptoms}"
+              ]
+            },
+            {
+              "name": "appointmentInsurance",
+              "type": "APPOINTMENT_INSURANCE",
+              "samples": [
+                "From my {appointmentInsurance}",
+                "I would like to pay through {appointmentInsurance}",
+                "{appointmentInsurance}"
+              ]
+            },
+            {
+              "name": "profileDateOfBirth",
+              "type": "AMAZON.DATE",
+              "samples": [
+                "My birthdate is {profileDateOfBirth}",
+                "My date of birth is {profileDateOfBirth}",
+                "I was born on {profileDateOfBirth}",
+                "{profileDateOfBirth}"
+              ]
+            }
+          ],
+          "samples": [
+            "make an appointment",
+            "set an appointment",
+            "setup an appointment",
+            "setup a meeting",
+            "set up a call",
+            "schedule a call",
+            "schedule a meeting",
+            "schedule an appointment"
+          ]
+        },
+        {
+          "name": "CheckAvailabilityIntent",
+          "slots": [
+            {
+              "name": "appointmentDate",
+              "type": "APPOINTMENT_DATE",
+              "samples": [
+                "on {appointmentDate}",
+                "check {appointmentDate}",
+                "try {appointmentDate}",
+                "{appointmentDate}"
+              ]
+            },
+            {
+              "name": "appointmentClinic",
+              "type": "APPOINTMENT_CLINIC",
+              "samples": [
+                "how about {appointmentClinic}",
+                "I\u0027d like to visit {appointmentClinic}",
+                "{appointmentClinic}"
+              ]
+            }
+          ],
+          "samples": [
+            "check availability"
+          ]
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": []
+        }
+      ],
+      "types": [
+        {
+          "values": [
+            {
+              "name": {
+                "value": "Physical"
+              }
+            },
+            {
+              "name": {
+                "value": "Others"
+              }
+            },
+            {
+              "name": {
+                "value": "Injury"
+              }
+            },
+            {
+              "name": {
+                "value": "Illness"
+              }
+            }
+          ],
+          "name": "APPOINTMENT_REASON"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "Self Pay"
+              }
+            },
+            {
+              "name": {
+                "value": "Insurance"
+              }
+            }
+          ],
+          "name": "APPOINTMENT_INSURANCE"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "Injured"
+              }
+            },
+            {
+              "name": {
+                "value": "Accident"
+              }
+            },
+            {
+              "name": {
+                "value": "Throat Pain"
+              }
+            },
+            {
+              "name": {
+                "value": "Fever"
+              }
+            },
+            {
+              "name": {
+                "value": "Cough"
+              }
+            },
+            {
+              "name": {
+                "value": "Cold"
+              }
+            }
+          ],
+          "name": "APPOINTMENT_SYMPTOMS"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "Milton"
+              }
+            },
+            {
+              "name": {
+                "value": "Dearbon"
+              }
+            },
+            {
+              "name": {
+                "value": "Fairburn"
+              }
+            },
+            {
+              "name": {
+                "value": "Stockbridge"
+              }
+            },
+            {
+              "name": {
+                "value": "Canton"
+              }
+            },
+            {
+              "name": {
+                "value": "Marietta"
+              }
+            },
+            {
+              "name": {
+                "value": "Fayetteville"
+              }
+            },
+            {
+              "name": {
+                "value": "West Cobb"
+              }
+            },
+            {
+              "name": {
+                "value": "Southgate"
+              }
+            },
+            {
+              "name": {
+                "value": "Woodstock"
+              }
+            },
+            {
+              "name": {
+                "value": "Austell"
+              }
+            },
+            {
+              "name": {
+                "value": "Buckhead South"
+              }
+            },
+            {
+              "name": {
+                "value": "Newnan"
+              }
+            },
+            {
+              "name": {
+                "value": "Allen Park"
+              }
+            }
+          ],
+          "name": "APPOINTMENT_CLINIC"
+        },
+        {
+          "values": [
+            {
+              "name": {
+                "value": "tomorrow"
+              }
+            },
+            {
+              "name": {
+                "value": "today"
+              }
+            }
+          ],
+          "name": "APPOINTMENT_DATE"
+        }
+      ]
+    },
+    "dialog": {
+      "intents": [
+        {
+          "name": "ScheduleAppointmentIntent",
+          "confirmationRequired": true,
+          "prompts": {
+            "confirmation": "Confirm.Intent.153503252364"
+          },
+          "slots": [
+            {
+              "name": "appointmentReason",
+              "type": "APPOINTMENT_REASON",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.107247851157.1598629339823"
+              }
+            },
+            {
+              "name": "appointmentSymptoms",
+              "type": "APPOINTMENT_SYMPTOMS",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.107247851157.353265265085"
+              }
+            },
+            {
+              "name": "appointmentInsurance",
+              "type": "APPOINTMENT_INSURANCE",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.97794454883.1240563225868"
+              }
+            },
+            {
+              "name": "profileDateOfBirth",
+              "type": "AMAZON.DATE",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.1553404217760.405632591387"
+              }
+            }
+          ],
+          "delegationStrategy": "SKILL_RESPONSE"
+        },
+        {
+          "name": "CheckAvailabilityIntent",
+          "confirmationRequired": false,
+          "prompts": {},
+          "slots": [
+            {
+              "name": "appointmentDate",
+              "type": "APPOINTMENT_DATE",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.1202202710374.620761290647"
+              }
+            },
+            {
+              "name": "appointmentClinic",
+              "type": "APPOINTMENT_CLINIC",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.1050396956352.848332766041"
+              }
+            }
+          ]
+        }
+      ],
+      "delegationStrategy": "ALWAYS"
+    },
+    "prompts": [
+      {
+        "id": "Elicit.Slot.153503252364.1550516431899",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Please tell me your full name."
+          },
+          {
+            "type": "PlainText",
+            "value": "What is your full name?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.153503252364.16028220185",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "What is your telephone number?"
+          }
+        ]
+      },
+      {
+        "id": "Confirm.Intent.153503252364",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "I have your meeting request. Would you like to confirm?"
+          }
+        ]
+      },
+      {
+        "id": "Slot.Validation.362475628407.1157681478773.1557208284837",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "The date must be tomorrow or later. What date would you like to meet?"
+          },
+          {
+            "type": "PlainText",
+            "value": "The appointment date must be at least one day from now. What day would you like to meet?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.1202202710374.620761290647",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "When would you like to visit - today or tomorrow?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Would you like to visit today or tomorrow?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.107247851157.1598629339823",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "What is the reason for your visit - Illness, Injury, Physical or Others?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Can you describe the reason for your visit - Illness, Injury, Physical or Others?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.107247851157.353265265085",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "I can sense that. What are your symptoms?"
+          },
+          {
+            "type": "PlainText",
+            "value": "I hope you feel better. Can you mention few symptoms?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.97794454883.1240563225868",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Would you like to pay for this appointment from your Insurance or self-pay?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.1050396956352.848332766041",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Which WellStreet clinic would you like to visit?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.1553404217760.405632591387",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "What\u0027s your date of birth - You can say like June Nineteen, Two Thousand One"
+          },
+          {
+            "type": "PlainText",
+            "value": "What is your date of birth - You can say like May Twenty, Nineteen Ninety Eight?"
+          }
+        ]
+      }
+    ]
+  },
+  "version": "29"
+}
