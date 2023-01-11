@@ -1,17 +1,10 @@
-/*
-* Alexa Scheduling Skill Template
-* Copyright (c) 2020 Dabble Lab - http://dabblelab.com
-* Portions Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-* SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
-* Licensed under the Amazon Software License  http://aws.amazon.com/asl/
- */
-
 /* 
-* This is an example skill that lets users schedule an appointment with the skill owner.
-* Users can choose a date and time to book an appointment that is then emailed to the skill owner.
+* This is a skill that lets users schedule an appointment with the WellStreet Urgent Care Centers listed below.
+* Users can choose a date and time to book an appointment that is then confirmed by WellStreet appointment booking system.
+* This skill uses the Digital Front Door Check Availability and Book Appointment APIs for the same.
+* This skill asks users for basic details such as center to visit, type of appointment, payment options.
 * This skill uses the ASK SDK 2.0 demonstrates the use of dialogs, getting a users email, name,
-* and mobile phone fro the the settings api, along with sending email from a skill and integrating
-* with calendaring to check free/busy times.
+* and mobile phone fro the the settings api, along with confirmation the appointment date time back to the user.
 */
 
 const Alexa = require('ask-sdk-core');
@@ -26,115 +19,16 @@ const sgMail = require('@sendgrid/mail');
 const https = require('https');
 require('dotenv').config();
 
-let centerList = {
-"WEST BLOOMFIELD": "0201",
-"TROY BIG BEAVER": "0202",
-"ALLEN PARK": "0203",
-"WOODHAVEN": "0204",
-"NOVI": "0205",
-"GARDEN CITY": "0206",
-"TAYLOR": "0207",
-"FARMINGTON HILLS NORTH": "0208",
-"GROSS POINTE FARMS": "0209",
-"ROYAL OAK WOODWARD CORNERS": "0210",
-"SHELBY TOWNSHIP": "0211",
-"MACOMB": "0212",
-"ST. CLAIR SHORES": "0213",
-"CANTON MICHIGAN": "0214",
-"FARMINGTON HILLS": "0215",
-"BLOOMFIELD TOWNSHIP": "0216",
-"WARREN WEST": "0217",
-"DOWNTOWN ROYAL OAK": "0218",
-"HAGGERTY SQUARE": "0219",
-"BLOOMFIELD HILLS": "0220",
-"TROY SQUARE LAKE": "0221",
-"WAYNE": "0222",
-"WARREN EAST": "0223",
-"CHESTERFIELD": "0224",
-"DEARBORN": "0225",
-"ROCHESTER HILLS": "0226",
-"SOUTHGATE": "0227",
-"LAKE ORION": "0228",
-"BUCKHEAD SOUTH": "101",
-"DUNWOODY": "103",
-"AUSTELL": "104",
-"SANDY SPRINGS VILLAGE": "105",
-"JOHNS CREEK ALPHARETTA": "106",
-"BUCKHEAD NORTH": "107",
-"PONCE DE LEON": "109",
-"MCDONOUGH": "110",
-"CLAIRMONT": "111",
-"HOLCOMB BRIDGE": "112",
-"MILTON": "113",
-"STOCKBRIDGE": "114",
-"SNELLVILLE": "115",
-"LOGANVILLE": "116",
-"NORCROSS": "117",
-"COVINGTON": "118",
-"SMYRNA": "119",
-"CONYERS": "120",
-"FAIRBURN": "121",
-"MARIETTA": "122",
-"WOODSTOCK": "123",
-"WEST COBB": "124",
-"DOUGLASVILLE": "125",
-"DALLAS": "129",
-"TUCKER": "130",
-"HICKORY FLAT": "132",
-"CUMMING": "133",
-"JOHNS CREEK": "134",
-"CHAMBLEE": "135",
-"CANTON GEORGIA": "136",
-"ELLENWOOD": "147",
-"MACON INGLESIDE": "148",
-"LAWRENCEVILLE": "149",
-"SNELLVILLE-CENTERVILLE HWY": "150",
-"LILBURN": "151",
-"GRAYSON": "152",
-"LOGANVILLE HWY 81": "153",
-"LITHONIA": "154",
-"ROME WEST": "155",
-"ROME EAST": "156",
-"CARTERSVILLE MAIN ST": "157",
-"CARTERSVILLE WEST AVE": "158",
-"JEFFERSON": "164",
-"OCONEE": "165",
-"WATKINSVILLE": "166",
-"ATHENS": "167",
-"BARROW": "168",
-"BLACKMON": "169",
-"UPTOWN":"170",
-"TEST LOCATION": "3746",
-"TEST DRIVE THRU": "37461",
-"TEST VIRTUAL": "37462",
-"NEWNAN": "601",
-"EAST POINT": "602",
-"FAYETTEVILLE": "604",
-"EAST COBB": "605",
-"PEACHTREE CITY": "606",
-"LAGRANGE": "607",
-"CARROLTON": "608",
-"NEWNAN CROSSING": "609",
-"CARTERSVILLE WEST OCCMED": "6158",
-"ATHENS OCCMED": "6167",
-"NEWNAN OCCMED": "6601",
-"LAGRANGE OCCMED": "6607",
-"NEWNAN DRIVE-THRU": "6771",
-"EAST COBB DRIVE-THRU": "6772",
-"REMOTE OCC MED": "6777",
-"GEORGIA VIRTUAL CLINIC": "6881",
-"MICHIGAN VIRTUAL CLINIC": "6882"
-}
+/* CENTER LISTS */
+let centerLists = require('./centers');
 
 /* CONSTANTS */
 // To set constants, change the value in .env.sample then
-// rename .env.sample to just .env
 
 /* LANGUAGE STRINGS */
 const languageStrings = require('./languages/languageStrings');
 
 /* HANDLERS */
-
 // This handler responds when required environment variables
 // missing or a .env file has not been created.
 const InvalidConfigHandler = {
@@ -195,14 +89,12 @@ const InvalidPermissionsHandler = {
   },
 };
 
+// This is a handler that is launched to greet the user if the required permissions are enabled.
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
   },
   handle(handlerInput) {
-      //console.log("handlerInput.requestEnvelope.request.type" + handlerInput.requestEnvelope.request.type);
-        //    console.log("handlerInput.requestEnvelope.request.intent.name" + handlerInput.requestEnvelope.request.intent.name);
-
     const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
     
     const speakOutput = requestAttributes.t('GREETING', requestAttributes.t('SKILL_NAME'));
@@ -249,8 +141,6 @@ const YesIntentHandler = {
     
     return handlerInput.responseBuilder
       .addDelegateDirective({
-        //name: 'ScheduleAppointmentIntent',
-        //name: 'CheckAvailabilityIntent',
         name: handlerName,
         confirmationStatus: 'NONE',
         slots: {},
@@ -260,6 +150,7 @@ const YesIntentHandler = {
   },
 };
 
+// This is a handler that is used to initiate the schedule appointment intent.
 const StartedInProgressScheduleAppointmentIntentHandler = {
   canHandle(handlerInput) {
     const { request } = handlerInput.requestEnvelope;
@@ -278,8 +169,6 @@ const StartedInProgressScheduleAppointmentIntentHandler = {
     const userTimezone = await upsServiceClient.getSystemTimeZone(deviceId);
 
     // get slots
-    //const appointmentDate = currentIntent.slots.appointmentDate;
-    //const appointmentTime = currentIntent.slots.appointmentTime;
     const appointmentDateTime = sessionAttributes.slotToBook;
     const appointmentClinic = sessionAttributes.appointmentClinic;
     const centerId = sessionAttributes.centerId;
@@ -287,79 +176,14 @@ const StartedInProgressScheduleAppointmentIntentHandler = {
     const appointmentSymptoms = currentIntent.slots.appointmentSymptoms;
     const appointmentInsurance = currentIntent.slots.appointmentInsurance;
     const profileDateOfBirth = currentIntent.slots.profileDateOfBirth;
-    //const appointmentPerson = currentIntent.slots.appointmentPerson;
     const profileName = await upsServiceClient.getProfileName();
-    console.log("appointmentDateTime" + appointmentDateTime);
-    console.log("appointmentClinic" + appointmentClinic);
-    console.log("centerId" + centerId);
-    console.log("appointmentReason" + appointmentReason.value);
-    console.log("appointmentSymptoms" + appointmentSymptoms.value);
-    console.log("appointmentInsurance" + appointmentInsurance.value);
-    console.log("profileDateOfBirth" + profileDateOfBirth.value);
 
-/*    if (appointmentDate.value && appointmentClinic.value) {
-        var dateLocal = luxon.DateTime.fromISO(luxon.DateTime.now().toFormat('yyyy-MM-dd'));
-        var todaysDate = luxon.DateTime.now().toFormat('yyyy-MM-dd');
-        console.log("Today's date is " + todaysDate);
-         
-      if (appointmentDate.value === 'tomorrow' || appointmentDate.value === 'tommorrow') {
-          dateLocal = dateLocal.plus({ days: 1 });
-          console.log("Tomorrow's date  is " + dateLocal.toFormat("yyyy-MM-dd"));
-      }
-      sessionAttributes.appointmentDateFormatted = dateLocal;
-      handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
-
-      //handlerInput.attributesManager.getSessionAttributes().appointmentData
-    
-      var res = await checkAvailability("0203", dateLocal);
-        res.on('data', d => {
-            //process.stdout.write(d);
-            console.log("getAvailableSlots Response is " + d);
-            const responseData = JSON.parse(d);
-            //console.log("Parsed Response Data is " + responseData);
-            if (responseData !== 'undefined' && responseData.data !== null) {
-                console.log("getAvailableSlots Data received is " + responseData.data);
-            } else if (responseData !== 'undefined' && responseData.errors !== null) {
-                console.log("Error received is " + responseData.errors);
-            }
-        });
-    }
-*/
     // we have an appointment date and time
     if (appointmentDateTime && appointmentClinic && appointmentReason.value && appointmentSymptoms.value && appointmentInsurance.value && profileDateOfBirth.value) {
-        //var dateLocal = luxon.DateTime.now();
-/*        var todaysDate = luxon.DateTime.now().toFormat('yyyy-MM-dd');
-        console.log("Today's date is " + todaysDate);
-
-        //var dateLocal = luxon.DateTime.fromISO(todaysDate, { zone: userTimezone });
-        var dateLocal = luxon.DateTime.fromISO(todaysDate);
-
-        //console.log("Today's date is " + dateLocal);
-        
-      if (appointmentDate !== 'undefined' && (appointmentDate.value === 'tomorrow' || appointmentDate.value === 'tommorrow')) {
-          dateLocal = dateLocal.plus({ days: 1 });
-          console.log("Tomorrow's date  is " + dateLocal.toFormat("yyyy-MM-dd"));
-
-      }
-    
-
-      // format appointment date
-      const timeLocal = luxon.DateTime.fromISO(appointmentTime.value, { zone: userTimezone });
-      const dateTimeLocal = dateLocal.plus({ 'hours': timeLocal.hour, 'minute': timeLocal.minute });
-      //console.log("dateTimeLocale  is " + dateTimeLocal);
-      const speakDateTimeLocal = dateTimeLocal.toLocaleString(luxon.DateTime.DATETIME_HUGE);
-*/
-        const speakDateTimeLocal = luxon.DateTime.fromISO(appointmentDateTime).setZone('America/New_York').toLocaleString(luxon.DateTime.DATETIME_HUGE);
-      //console.log("Final datetime  is " + speakDateTimeLocal);
-
-    
+        const speakDateTimeLocal = luxon.DateTime.fromISO(appointmentDateTime).setZone(process.env.DFD_TIMEZONE).toLocaleString(luxon.DateTime.DATETIME_HUGE);
 
       // custom intent confirmation for ScheduleAppointmentIntent
       if (currentIntent.confirmationStatus === 'NONE'
-        //&& currentIntent.slots.appointmentDate.value
-        //&& currentIntent.slots.appointmentTime.value
-        //&& currentIntent.slots.appointmentClinic.value
-        //&& currentIntent.slots.appointmentPerson.value
         && currentIntent.slots.appointmentReason.value
         && currentIntent.slots.appointmentSymptoms.value
         && currentIntent.slots.appointmentInsurance.value
@@ -398,12 +222,8 @@ const CompletedScheduleAppointmentIntentHandler = {
     // get timezone
     const { deviceId } = handlerInput.requestEnvelope.context.System.device;
     const userTimezone = await upsServiceClient.getSystemTimeZone(deviceId);
-    // const userTimezone = 'Asia/Yerevan';
 
     // get slots
-    //const appointmentDate = currentIntent.slots.appointmentDate;
-    //const appointmentTime = currentIntent.slots.appointmentTime;
-    //const appointmentClinic = currentIntent.slots.appointmentClinic;
     const appointmentDate = sessionAttributes.appointmentDate;
     const startTimeInMins = sessionAttributes.startTimeInMins;
     const endTimeInMins = sessionAttributes.endTimeInMins;
@@ -415,30 +235,12 @@ const CompletedScheduleAppointmentIntentHandler = {
     const appointmentSymptoms = currentIntent.slots.appointmentSymptoms;
     const appointmentInsurance = currentIntent.slots.appointmentInsurance;
     let profileDateOfBirth = currentIntent.slots.profileDateOfBirth;
-    console.log("CompletedScheduleAppointmentIntentHandler profileDateOfBirth -->" + profileDateOfBirth.value);
-    const dateOfBirth = profileDateOfBirth.value + "T00:00:00.000Z";
-    console.log("CompletedScheduleAppointmentIntentHandler dateOfBirth -->" + dateOfBirth);
-    //profileDateOfBirth = profileDateOfBirth.value + "T00:00:00.000Z";
-    //const appointmentPerson = currentIntent.slots.appointmentPerson;
-    
-    // format appointment date and time
-    //var dateLocal = luxon.DateTime.fromISO(luxon.DateTime.now().toFormat('yyyy-MM-dd'), { zone: userTimezone });
-/*    var dateLocal = luxon.DateTime.fromISO(luxon.DateTime.now().toFormat('yyyy-MM-dd'));
-    console.log("Today's date  is " + dateLocal.toFormat('yyyy-MM-dd'));
-     if (appointmentDate !== 'undefined' && (appointmentDate.value === 'tomorrow' || appointmentDate.value === 'tommorrow')) {
-          dateLocal = dateLocal.plus({ days: 1 });
-          console.log("Tomorrow's date  is " + dateLocal.toFormat('yyyy-MM-dd'));
-     }
-    //const dateLocal = luxon.DateTime.fromISO(appointmentDate.value, { zone: userTimezone });
-    const timeLocal = luxon.DateTime.fromISO(appointmentTime.value, { zone: userTimezone });
-    const dateTimeLocal = dateLocal.plus({ 'hours': timeLocal.hour, 'minute': timeLocal.minute || 0 });
-    const speakDateTimeLocal = dateTimeLocal.toLocaleString(luxon.DateTime.DATETIME_HUGE);
+    //console.log("CompletedScheduleAppointmentIntentHandler profileDateOfBirth -->" + profileDateOfBirth.value);
+    const dateOfBirth = profileDateOfBirth.value + process.env.DFD_TIMESTAMP_HOLDER;
+    //console.log("CompletedScheduleAppointmentIntentHandler dateOfBirth -->" + dateOfBirth);
 
-    // set appointment date to utc and add 30 min for end time
-    //const startTimeUtc = dateTimeLocal.toUTC().toISO();
-    //const endTimeUtc = dateTimeLocal.plus({ minutes: 30 }).toUTC().toISO();*/
     
-    const speakDateTimeLocal = luxon.DateTime.fromISO(slotToBook).setZone('America/New_York').toLocaleString(luxon.DateTime.DATETIME_HUGE);
+    const speakDateTimeLocal = luxon.DateTime.fromISO(slotToBook).setZone(process.env.DFD_TIMEZONE).toLocaleString(luxon.DateTime.DATETIME_HUGE);
 
     // get user profile details
     const mobileNumber = await upsServiceClient.getProfileMobileNumber();
@@ -472,7 +274,7 @@ const CompletedScheduleAppointmentIntentHandler = {
 			"otpVerified": true,
 			"reason": appointmentReason.value,
 			"symptoms": appointmentSymptoms.value,
-			"checkinLocation": "Home",
+			"checkinLocation": process.env.DFD_CHECK_IN_LOCATION,
 			//Home, Parking Lot, Inside Clinic
 			"firstName": firstName,
 			"lastName": lastName,
@@ -481,14 +283,12 @@ const CompletedScheduleAppointmentIntentHandler = {
 			"consentToSMSNotification": true,
 			"payment": {
 				"type": appointmentInsurance.value
-				//Insurance, Uninsured, EmployeeServices
 			},
 			"verificationInfo": {
-				"id": "22a7b72d-3fc0-45e5-95e5-b4bee9ee88fa",
+				"id": process.env.DFD_DUMMY_VERIFICATION_ID,
 				"code": 984237
 			},
 			"appointment": {
-				//"date": dateLocal.toFormat('yyyy-MM-dd'),
 				"date": appointmentDate,
 				"startTimeInMins": startTimeInMins,
 				"endTimeInMins": endTimeInMins,
@@ -497,16 +297,16 @@ const CompletedScheduleAppointmentIntentHandler = {
 			"centerId": centerId,
 			"requestFromEmployerApp": false,
 			"iAmHere": false,
-			"channel": "Patient",
+			"channel": process.env.DFD_CHANNEL,
 			"isTelemedVisit": false,
 			"isPatientChoseFirstSlot": true,
 			"nextAvailable": {
 				"startTimeInMins": 720,
 				"endTimeInMins": 780,
-				"date": "2022-08-05T00:00:00.000Z"
+				"date": process.env.DFD_DUMMY_DATE1
 			}
 		},
-		date: "2022-08-02T11:21:40Z"
+		date: process.env.DFD_DUMMY_DATE2
 	    },
 	    query: "mutation createVisitPa($createVisitobj: CreateVisitInput!, $date: DateTime!) {\n  createVisitPa(createVisit: $createVisitobj, date: $date) {\n    _id\n    centerInfo {\n      centerId\n      facilityName\n      providerName\n      address {\n        address1\n        city\n        state\n        zipcode\n        coordinates\n        __typename\n      }\n      __typename\n    }\n    email\n    phoneNumber\n    createdDateTime\n    updatedDateTime\n    appointment {\n      date\n      startTimeInMins\n      endTimeInMins\n      slotQueue\n      __typename\n    }\n    reason\n    currentStatusCode\n    currentSubStatusCode\n    consentToSMSNotification\n    isNewVisit\n    patientInfo {\n      patientId\n      firstName\n      lastName\n      middleName\n      preferredName\n      dateOfBirth\n      sex\n      language\n      isMarried\n      ethnicity\n      race\n      preferredPharmacy {\n        name\n        address\n        __typename\n      }\n      __typename\n    }\n    photoIdUri {\n      front {\n        name\n        uri\n        previewBase64\n        __typename\n      }\n      back {\n        name\n        uri\n        previewBase64\n        __typename\n      }\n      __typename\n    }\n    contactDetails {\n      phoneNumber\n      email\n      address1\n      address2\n      city\n      state\n      zipCode\n      __typename\n    }\n    primaryCare {\n      care\n      physician\n      phone\n      __typename\n    }\n    emergencyContact {\n      name\n      phone\n      relationship\n      otherRelationship\n      __typename\n    }\n    responsibleParty {\n      relationshipToSubscriber\n      firstName\n      lastName\n      dateOfBirth\n      email\n      phone\n      __typename\n    }\n    priority\n    previousPriority\n    secondaryInsuranceInfo {\n      isSecondaryAvailable\n      ssn\n      insuranceCompany\n      insuranceCoverageType\n      memberId\n      groupNumber\n      insuranceIdUri {\n        front {\n          name\n          uri\n          previewBase64\n          __typename\n        }\n        back {\n          name\n          uri\n          previewBase64\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    insuranceInfo {\n      ssn\n      insuranceCompany\n      insuranceCoverageType\n      memberId\n      groupNumber\n      insuranceIdUri {\n        front {\n          name\n          uri\n          previewBase64\n          __typename\n        }\n        back {\n          name\n          uri\n          previewBase64\n          __typename\n        }\n        __typename\n      }\n      secondaryInsurance\n      vaNotified\n      __typename\n    }\n    idMismatchInfo\n    insuranceMismatchInfo\n    registrationChecks {\n      identity\n      forms\n      insurance\n      medicare\n      patientDetails\n      contactDetails\n      insuranceDetails\n      medicare\n      insuranceHolder\n      financialResponsibility\n      condOfServAndConsentToTreat\n      patientFinancialResponsibility\n      authToReleaseInfo\n      ackOfRightsAndPrivacy\n      medicalRecordDiscloser\n      childProxyForm\n      childProxyConsent\n      occMedRegistrationStatus\n      occMedPatientDetails\n      occMedCompanyInformation\n      workRelatedInjuryForm\n      patientConsentForm\n      __typename\n    }\n    occMed {\n      haveWorkInjury\n      driversLicenseClass\n      patientID\n      license\n      stateIssue\n      driversLicenseClass\n      driversLicenseIdUri {\n        front {\n          name\n          uri\n          previewBase64\n          __typename\n        }\n        __typename\n      }\n      passport\n      countryIssue\n      passportIdUploadUri {\n        front {\n          name\n          uri\n          previewBase64\n          __typename\n        }\n        __typename\n      }\n      authorizationLetterUri {\n        front {\n          name\n          uri\n          previewBase64\n          __typename\n        }\n        __typename\n      }\n      companyName\n      companyPhone\n      bodyPartOfInjury\n      priorInjuriesDate\n      comments\n      dateTimeOfInjury\n      priorInjuries\n      priorInjuriesReason\n      reasonForInjury\n      consentToPrivacy\n      patientAgreement\n      signature\n      signedDateForAgreement\n      __typename\n    }\n    isAttended\n    iAmHere\n    attendedBy\n    visitType\n    isOccMedVisit\n    employeeServiceType\n    subscriberInfo {\n      firstName\n      lastName\n      dateOfBirth\n      relationship\n      ssn\n      relationshipOther\n      __typename\n    }\n    isConsentAgreed\n    workflow {\n      timeStamp\n      actionTakenBy\n      workflowStatusCode\n      workflowSubStatuscode\n      __typename\n    }\n    notes {\n      comments\n      timeStamp\n      notesBy\n      hasNew\n      __typename\n    }\n    financialSignature\n    autorizationToReleaseSignature\n    payment {\n      _id\n      type\n      __typename\n    }\n    employer {\n      employer\n      contactName\n      contactPhoneNumber\n      address1\n      address2\n      city\n      state\n      zipCode\n      reason\n      __typename\n    }\n    medicare {\n      isMedicareAvailable\n      firstName\n      lastName\n      middleName\n      preferredName\n      dateOfBirth\n      ssn\n      blackLungBenefits\n      paidByGovernment\n      benefitsThroughDVA\n      illnessDueToWork\n      illnessDueToNonWork\n      medicareBasedOnAge\n      medicareBasedOnDiability\n      esrd\n      employed\n      dateOfRetirement\n      yourSpouseEmployed\n      spouseDateOfRetirement\n      ghpCoverage\n      __typename\n    }\n    consentToTreat\n    rightAndPrivacy {\n      firstName\n      consentTOPrivacy\n      signature\n      __typename\n    }\n    consent {\n      consentToTreat\n      consentToFinanicalResposibity\n      consentToReleaseInformation\n      consentToChildProxy\n      consentToPrivacy\n      consentToTeleMedicine\n      __typename\n    }\n    childProxyForm {\n      firstName\n      lastName\n      middleName\n      preferredName\n      dateOfBirth\n      phoneNumber\n      email\n      address1\n      address2\n      state\n      city\n      zipCode\n      primaryClinic\n      __typename\n    }\n    childProxyConsent {\n      firstName\n      consentToChart\n      signature\n      __typename\n    }\n    medicalRecordDiscloser {\n      relationship\n      relationshipOther\n      firstName\n      lastName\n      phoneNumber\n      __typename\n    }\n    iAmHere\n    currentStatusCode\n    symptoms\n    __typename\n  }\n}\n"
     };
@@ -531,121 +331,6 @@ const CompletedScheduleAppointmentIntentHandler = {
 };
 
 
-// Handles the completion of an appointment. This handler is used when
-// dialog in ScheduleAppointmentIntent is completed.
-/*const CompletedScheduleAppointmentIntentHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-      && handlerInput.requestEnvelope.request.intent.name === 'ScheduleAppointmentIntent'
-      && handlerInput.requestEnvelope.request.dialogState === 'COMPLETED';
-  },
-  async handle(handlerInput) {
-    const currentIntent = handlerInput.requestEnvelope.request.intent;
-    const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
-    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-    const upsServiceClient = handlerInput.serviceClientFactory.getUpsServiceClient();
-
-    // get timezone
-    const { deviceId } = handlerInput.requestEnvelope.context.System.device;
-    const userTimezone = await upsServiceClient.getSystemTimeZone(deviceId);
-    // const userTimezone = 'Asia/Yerevan';
-
-    // get slots
-    const appointmentDate = currentIntent.slots.appointmentDate;
-    const appointmentTime = currentIntent.slots.appointmentTime;
-    const appointmentClinic = currentIntent.slots.appointmentClinic;
-    const appointmentReason = currentIntent.slots.appointmentReason;
-    const appointmentSymptoms = currentIntent.slots.appointmentSymptoms;
-    const appointmentInsurance = currentIntent.slots.appointmentInsurance;
-    const appointmentPerson = currentIntent.slots.appointmentPerson;
-    
-    // format appointment date and time
-    const dateLocal = luxon.DateTime.fromISO(appointmentDate.value, { zone: userTimezone });
-    const timeLocal = luxon.DateTime.fromISO(appointmentTime.value, { zone: userTimezone });
-    const dateTimeLocal = dateLocal.plus({ 'hours': timeLocal.hour, 'minute': timeLocal.minute || 0 });
-    const speakDateTimeLocal = dateTimeLocal.toLocaleString(luxon.DateTime.DATETIME_HUGE);
-
-    // set appontement date to utc and add 30 min for end time
-    const startTimeUtc = dateTimeLocal.toUTC().toISO();
-    const endTimeUtc = dateTimeLocal.plus({ minutes: 30 }).toUTC().toISO();
-
-    // get user profile details
-    const mobileNumber = await upsServiceClient.getProfileMobileNumber();
-    const profileName = await upsServiceClient.getProfileName();
-    const profileEmail = await upsServiceClient.getProfileEmail();
-
-    // deal with intent confirmation denied
-    if (currentIntent.confirmationStatus === 'DENIED') {
-      const speakOutput = requestAttributes.t('NO_CONFIRM');
-      const repromptOutput = requestAttributes.t('NO_CONFIRM_REPROMPT');
-
-      return handlerInput.responseBuilder
-        .speak(speakOutput)
-        .reprompt(repromptOutput)
-        .getResponse();
-    }
-
-    // params for booking appointment
-    const appointmentData = {
-      title: requestAttributes.t('APPOINTMENT_TITLE', profileName),
-      description: requestAttributes.t('APPOINTMENT_DESCRIPTION', profileName),
-      appointmentDateTime: dateTimeLocal,
-      userTimezone,
-      appointmentDate: appointmentDate.value,
-      appointmentTime: appointmentTime.value,
-      profileName,
-      profileEmail,
-      profileMobileNumber: `+${mobileNumber.countryCode}${mobileNumber.phoneNumber}`,
-    };
-
-    sessionAttributes.appointmentData = appointmentData;
-    handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
-
-    // schedule without freebusy check
-    if ( process.env.CHECK_FREEBUSY === 'false' ) {
-      await bookAppointment(handlerInput);
-
-      const speakOutput = requestAttributes.t('APPOINTMENT_CONFIRM_COMPLETED', process.env.FROM_NAME, speakDateTimeLocal);
-
-      return handlerInput.responseBuilder
-        .withSimpleCard(
-          requestAttributes.t('APPOINTMENT_TITLE', process.env.FROM_NAME),
-          requestAttributes.t('APPOINTMENT_CONFIRM_COMPLETED', process.env.FROM_NAME, speakDateTimeLocal),
-        )
-        .speak(speakOutput)
-        .getResponse();
-    } else if ( process.env.CHECK_FREEBUSY === 'true' ) {
-
-      // check if the request time is available
-      const isTimeSlotAvailable = await checkAvailability(startTimeUtc, endTimeUtc, userTimezone);
-
-      // schedule with freebusy check
-      if (isTimeSlotAvailable) {
-        await bookAppointment(handlerInput);
-
-        const speakOutput = requestAttributes.t('APPOINTMENT_CONFIRM_COMPLETED', process.env.FROM_NAME, speakDateTimeLocal);
-
-        return handlerInput.responseBuilder
-          .withSimpleCard(
-            requestAttributes.t('APPOINTMENT_TITLE', process.env.FROM_NAME),
-            requestAttributes.t('APPOINTMENT_CONFIRM_COMPLETED', process.env.FROM_NAME, speakDateTimeLocal),
-          )
-          .speak(speakOutput)
-          .getResponse();
-      }
-
-      // time requested is not available so prompt to pick another time
-      const speakOutput = requestAttributes.t('TIME_NOT_AVAILABLE', speakDateTimeLocal);
-      const speakReprompt = requestAttributes.t('TIME_NOT_AVAILABLE_REPROMPT', speakDateTimeLocal);
-
-      return handlerInput.responseBuilder
-        .speak(speakOutput)
-        .reprompt(speakReprompt)
-        .getResponse();
-    }
-  },
-};*/
-
 
 // This handler is used to handle cases when a user asks if an
 // appointment time is available
@@ -662,12 +347,7 @@ const CheckAvailabilityIntentHandler = {
 
     const currentIntent = handlerInput.requestEnvelope.request.intent;
     const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
-    //const upsServiceClient = handlerInput.serviceClientFactory.getUpsServiceClient();
     const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-
-    // get timezone
-    //const { deviceId } = handlerInput.requestEnvelope.context.System.device;
-    //const userTimezone = await upsServiceClient.getSystemTimeZone(deviceId);
 
     // get slots
     const appointmentDate = currentIntent.slots.appointmentDate;
@@ -676,8 +356,6 @@ const CheckAvailabilityIntentHandler = {
     
     // format appointment date and time
     var dateLocal = luxon.DateTime.now().setZone('America/New_York').startOf('day');
-    //var dateLocal = luxon.DateTime.fromISO(luxon.DateTime.now().toFormat('yyyy-MM-dd'), { zone: 'America/New_York' });
-    //var dateLocalFormatted = dateLocal.toFormat('yyyy-MM-dd');
     var dateLocalFormatted = dateLocal.toISO();
     console.log("Today's dateformat  is " + dateLocalFormatted);
     
@@ -685,30 +363,20 @@ const CheckAvailabilityIntentHandler = {
      if (appointmentDate !== 'undefined' && (appointmentDate.value === 'tomorrow' || appointmentDate.value === 'tommorrow')) {
           dateLocal = dateLocal.plus({days: 1});
           todayOrTomorrow = 'tomorrow';
-          //dateLocalFormatted = dateLocal.toFormat('yyyy-MM-dd');
           dateLocalFormatted = dateLocal.toISO();
           console.log("Tomorrow's date  is " + dateLocalFormatted);
      }
     
     let startTimeInMins;
     
-    const centerId = centerList[appointmentClinic.value.toUpperCase()];
-    
+    const centerId = centerLists[appointmentClinic.value.toUpperCase()];
+
     console.log("center name is " + appointmentClinic.value + " center code is " + centerId);
     sessionAttributes.centerId = centerId;
     sessionAttributes.appointmentClinic = appointmentClinic.value;
-    //dateLocalFormatted = dateLocalFormatted + "T"
 
     // get the list of available slots for this center and appointmentDate
-    //const checkAvlb = await checkAvailability(centerId, dateLocalFormatted, handlerInput);
     let slotAvailabilityResponse = checkAvailability(centerId, dateLocalFormatted, handlerInput);
-    
-    /*new checkAvailability(centerId, dateLocalFormatted, handlerInput).then(function(response) {
-        console.log("Success!", response);
-        }, function(error) {
-        console.error("Failed!", error);
-    })*/
-
     
     slotAvailabilityResponse.then((myResponse) => { 
         console.log("Response Data is " + myResponse);
@@ -835,6 +503,10 @@ const CheckAvailabilityIntentHandler = {
                         var dateTimeLocalCheck = dateLocalCheck.plus({'minute': startTimeInMins+minuteLocalCheck});
                         const diff = luxon.Interval.fromDateTimes(dateTimeLocalCheck, luxon.DateTime.now());
                         const diffHours = diff.length('minutes');
+                        if (diffHours > 0) {
+                            dateTimeLocalCheck = dateLocalCheck.plus({'minute': startTimeInMins+diffHours});
+                            console.log("dateTimeLocalCheck is " + dateTimeLocalCheck);
+                        }
                         console.log("diffHours is " + diffHours);
                     } else {
                         for (let step =0; step < usedSlots.length; step++) {
@@ -855,17 +527,6 @@ const CheckAvailabilityIntentHandler = {
                         }
                     }
                 }
-                
-                /*
-                "startTimeInMins": "720", (12,36)
-                "endTimeInMins": "780",
-                "usedSlots": [1,2,4,5,7,8,9]
-                "totalSlots": 10,
-                "offlineSlots": 4,
-                "onlineSlots": 6,
-                "usedOfflineSlots": 3,
-                "usedOnlineSlots": 4,
-                "availableSlots": 3,*/
                 
                 const minuteLocal = Math.round(60/totalSlots)*slotQueue;
                 console.log("Next Available Slot Minute is " + minuteLocal);
@@ -900,23 +561,6 @@ const CheckAvailabilityIntentHandler = {
         }
        
     }).catch(console.log);
-    //var handlerInput.attributesManager.getSessionAttributes().availabilityResponse;
-    //;
-
-    //let speakOutput = requestAttributes.t('TIME_NOT_AVAILABLE', speakDateTimeLocal);
-    //let speekReprompt = requestAttributes.t('TIME_NOT_AVAILABLE_REPROMPT', speakDateTimeLocal);
-
-    /*if (isTimeSlotAvailable) {
-      // save booking time to session to be used for booking
-      const sessionAttributes = {
-        appointmentDate,
-        appointmentTime,
-      };
-
-      attributesManager.setSessionAttributes(sessionAttributes);
-
-      speakOutput = requestAttributes.t('TIME_AVAILABLE', speakDateTimeLocal);
-      speekReprompt = requestAttributes.t('TIME_AVAILABLE_REPROMPT', speakDateTimeLocal);*/
 
       let speakOutput = requestAttributes.t('TIME_AVAILABLE', todayOrTomorrow, startTimeInMins);
       let speekReprompt = requestAttributes.t('TIME_AVAILABLE_REPROMPT', todayOrTomorrow, startTimeInMins);
@@ -934,72 +578,6 @@ const CheckAvailabilityIntentHandler = {
       .getResponse();
   },
 };
-
-// This handler is used to handle cases when a user asks if an
-// appointment time is available
-/*const CheckAvailabilityIntentHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-      && handlerInput.requestEnvelope.request.intent.name === 'CheckAvailabilityIntent';
-  },
-  async handle(handlerInput) {
-    const {
-      responseBuilder,
-      attributesManager,
-    } = handlerInput;
-
-    const currentIntent = handlerInput.requestEnvelope.request.intent;
-    const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
-    const upsServiceClient = handlerInput.serviceClientFactory.getUpsServiceClient();
-
-    // get timezone
-    const { deviceId } = handlerInput.requestEnvelope.context.System.device;
-    const userTimezone = await upsServiceClient.getSystemTimeZone(deviceId);
-
-    // get slots
-    const appointmentDate = currentIntent.slots.appointmentDate;
-    const appointmentTime = currentIntent.slots.appointmentTime;
-
-    // format appointment date and time
-    const dateLocal = luxon.DateTime.fromISO(appointmentDate.value, { zone: userTimezone });
-    const timeLocal = luxon.DateTime.fromISO(appointmentTime.value, { zone: userTimezone });
-    const dateTimeLocal = dateLocal.plus({ 'hours': timeLocal.hour, 'minute': timeLocal.minute || 0 });
-    const speakDateTimeLocal = dateTimeLocal.toLocaleString(luxon.DateTime.DATETIME_HUGE);
-
-    // set appontement date to utc and add 30 min for end time
-    const startTimeUtc = dateTimeLocal.toUTC().toISO();
-    const endTimeUtc = dateTimeLocal.plus({ minutes: 30 }).toUTC().toISO();
-
-    // check to see if the appointment date and time is available
-    const isTimeSlotAvailable = await checkAvailability(startTimeUtc, endTimeUtc, userTimezone);
-
-    let speakOutput = requestAttributes.t('TIME_NOT_AVAILABLE', speakDateTimeLocal);
-    let speekReprompt = requestAttributes.t('TIME_NOT_AVAILABLE_REPROMPT', speakDateTimeLocal);
-
-    if (isTimeSlotAvailable) {
-      // save booking time to session to be used for booking
-      const sessionAttributes = {
-        appointmentDate,
-        appointmentTime,
-      };
-
-      attributesManager.setSessionAttributes(sessionAttributes);
-
-      speakOutput = requestAttributes.t('TIME_AVAILABLE', speakDateTimeLocal);
-      speekReprompt = requestAttributes.t('TIME_AVAILABLE_REPROMPT', speakDateTimeLocal);
-
-      return responseBuilder
-        .speak(speakOutput)
-        .reprompt(speekReprompt)
-        .getResponse();
-    }
-
-    return responseBuilder
-      .speak(speakOutput)
-      .reprompt(speekReprompt)
-      .getResponse();
-  },
-};*/
 
 
 
@@ -1243,7 +821,7 @@ function checkAvailability(centerId, appointmentDate, handlerInput) {
     console.log("getAvailabilityRequest is " + data);
      
      const options = {
-          hostname: 'digitalfrontdoor-apiservice-stg.azurewebsites.net',
+          hostname: process.env.DFD_APPOINTMENT_SERVICE,
           port: 443,
           path: '/graphql',
           method: 'POST',
@@ -1258,11 +836,6 @@ function checkAvailability(centerId, appointmentDate, handlerInput) {
         let getAvailabilityResponse = "";
         res.on('data', d => {
             getAvailabilityResponse += d;
-            //resolve(d);
-            //return d;
-            //sessionAttributes.availabilityResponse  = d;
-            //handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
-            //console.log('sessionAttributes set as ' + handlerInput.attributesManager.getSessionAttributes().availabilityResponse);
         });
         
         res.on('end', d => {
@@ -1286,75 +859,7 @@ function checkAvailability(centerId, appointmentDate, handlerInput) {
   }));
 }
 
-// A function that usess the Google Calander API and the freebusy service
-// to check if a given appointment time slot is available
-/*
-function checkAvailability(startTime, endTime, timezone) {
-  const {
-    CLIENT_ID,
-    CLIENT_SECRET,
-    REDIRECT_URIS,
-    ACCESS_TOKEN,
-    REFRESH_TOKEN,
-    TOKEN_TYPE,
-    EXPIRE_DATE,
-    SCOPE,
-  } = process.env;
 
-  return new Promise(((resolve, reject) => {
-    // Setup oAuth2 client
-    const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URIS);
-    const tokens = {
-      access_token: ACCESS_TOKEN,
-      scope: SCOPE,
-      token_type: TOKEN_TYPE,
-      expiry_date: EXPIRE_DATE,
-    };
-
-    if (REFRESH_TOKEN) tokens.refresh_token = REFRESH_TOKEN;
-
-    oAuth2Client.credentials = tokens;
-
-    // Create a Calendar instance
-    const Calendar = google.calendar({
-      version: 'v3',
-      auth: oAuth2Client,
-    });
-
-    /** RequestBody
-     * @items Array [{id : "<email-address>"}]
-     * @timeMax String 2020-06-17T15:30:00.000Z
-     * @timeMin String 2020-06-17T15:00:00.000Z
-     * @timeZone String America/New_York
-     */
-
-    // Setup request body
-   /* const query = {
-      items: [
-        {
-          id: process.env.NOTIFY_EMAIL,
-        },
-      ],
-      timeMin: startTime,
-      timeMax: endTime,
-      timeZone: timezone,
-    };
-
-    Calendar.freebusy.query({
-      requestBody: query,
-    }, (err, resp) => {
-      if (err) {
-        reject(err);
-      } else if (resp.data.calendars[process.env.NOTIFY_EMAIL].busy
-        && resp.data.calendars[process.env.NOTIFY_EMAIL].busy.length > 0) {
-        resolve(false);
-      } else {
-        resolve(true);
-      }
-    });
-  }));
-}
-*/
 
 // This function processes a booking request by creating a .ics file,
 // saving the .isc file to S3 and sending it via email to the skill ower.
@@ -1370,7 +875,7 @@ function bookAppointment(handlerInput) {
      console.log("appointmentData is " + data);
      
      const options = {
-          hostname: 'digitalfrontdoor-apiservice-stg.azurewebsites.net',
+          hostname: process.env.DFD_APPOINTMENT_SERVICE,
           port: 443,
           path: '/graphql',
           method: 'POST',
@@ -1413,101 +918,6 @@ function bookAppointment(handlerInput) {
   }));
 }
 
-// This function processes a booking request by creating a .ics file,
-// saving the .isc file to S3 and sending it via email to the skill ower.
-/*function bookAppointment(handlerInput) {
-  return new Promise(((resolve, reject) => {
-    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-    const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
-
-    try {
-      const appointmentData = sessionAttributes.appointmentData;
-      const userTime = luxon.DateTime.fromISO(appointmentData.appointmentDateTime,
-        { zone: appointmentData.userTimezone });
-      const userTimeUtc = userTime.setZone('utc');
-
-      // create .ics
-      const event = {
-        start: [
-          userTimeUtc.year,
-          userTimeUtc.month,
-          userTimeUtc.day,
-          userTimeUtc.hour,
-          userTimeUtc.minute,
-        ],
-        startInputType: 'utc',
-        endInputType: 'utc',
-        productId: 'dabblelab/ics',
-        duration: { hours: 0, minutes: 30 },
-        title: appointmentData.title,
-        description: appointmentData.description,
-        status: 'CONFIRMED',
-        busyStatus: 'BUSY',
-        organizer: { name: process.env.FROM_NAME, email: process.env.FROM_EMAIL },
-        attendees: [
-          {
-            name: appointmentData.profileName,
-            email: appointmentData.profileEmail,
-            rsvp: true,
-            partstat: 'ACCEPTED',
-            role: 'REQ-PARTICIPANT',
-          },
-        ],
-      };
-
-      const icsData = ics.createEvent(event);
-
-      // save .ics to s3
-      const s3 = new AWS.S3();
-
-      const s3Params = {
-        Body: icsData.value,
-        Bucket: process.env.S3_PERSISTENCE_BUCKET,
-        Key: `appointments/${appointmentData.appointmentDate}/${event.title.replace(/ /g, '-')
-          .toLowerCase()}-${luxon.DateTime.utc().toMillis()}.ics`,
-      };
-
-      s3.putObject(s3Params, () => {
-        // send email to user
-        
-        if ( process.env.SEND_EMAIL === 'true' ) {
-          console.log('DEGUB ' + typeof process.env.SEND_EMAIL)
-          const attachment = Buffer.from(icsData.value);
-          
-          const msg = {
-            to: [process.env.NOTIFY_EMAIL, appointmentData.profileEmail],
-            from: process.env.FROM_EMAIL,
-            subject: requestAttributes.t('EMAIL_SUBJECT', appointmentData.profileName, process.env.FROM_NAME),
-            text: requestAttributes.t('EMAIL_TEXT',
-              appointmentData.profileName,
-              process.env.FROM_NAME,
-              appointmentData.profileMobileNumber),
-            attachments: [
-              {
-                content: attachment.toString('base64'),
-                filename: 'appointment.ics',
-                type: 'text/calendar',
-                disposition: 'attachment',
-              },
-            ],
-          };
-  
-          sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-          sgMail.send(msg).then((result) => {
-            // mail done sending
-            resolve(result);
-          });
-          
-        } else {
-          resolve(true);
-        }
-      });
-    } catch (ex) {
-      console.log(`bookAppointment() ERROR: ${ex.message}`);
-      reject(ex);
-    }
-  }));
-}*/
 
 
 /* LAMBDA SETUP */
